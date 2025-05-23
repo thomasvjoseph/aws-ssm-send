@@ -1,0 +1,21 @@
+name: 'Run EC2 Command via AWS SSM'
+description: 'Execute remote shell commands on EC2 via AWS SSM (no SSH or keys).'
+author: 'Your Name or Org'
+branding:
+  icon: 'terminal'
+  color: 'blue'
+
+inputs:
+  instance-id:
+    description: 'The EC2 instance ID'
+    required: true
+  region:
+    description: 'The AWS region'
+    required: true
+  commands:
+    description: 'Multiline shell commands to execute on the EC2 instance'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
