@@ -1,21 +1,52 @@
 name: 'Run EC2 Command via AWS SSM'
-description: 'Execute remote shell commands on EC2 via AWS SSM (no SSH or keys).'
-author: 'Your Name or Org'
+description: 'Run remote bash commands on EC2 using AWS SSM without SSH or keys.'
+author: 'Thomas Joseph'
 branding:
   icon: 'terminal'
   color: 'blue'
 
 inputs:
   instance-id:
-    description: 'The EC2 instance ID'
+    description: 'EC2 instance ID'
     required: true
   region:
-    description: 'The AWS region'
+    description: 'AWS region'
     required: true
   commands:
-    description: 'Multiline shell commands to execute on the EC2 instance'
+    description: 'Multiline bash commands to run remotely'
     required: true
 
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: 'composite'
+  steps:
+    - name: Run remote command via SSM
+      shell: bash
+      run: |
+        if ! command -v jq >/dev/null 2>&1; then
+          echo "jq not found, installing..."
+          sudo apt-get update && sudo apt-get install -y jq
+        fi
+
+        echo "Converting commands to JSON array..."
+        COMMANDS_JSON=$(echo "${{ inputs.commands }}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+        echo "Sending SSM command to ${{ inputs.instance-id }}..."
+        COMMAND_ID=$(aws ssm send-command \
+          --document-name "AWS-RunShellScript" \
+          --targets "Key=instanceids,Values=${{ inputs.instance-id }}" \
+          --parameters "{\"commands\":$COMMANDS_JSON}" \
+          --region "${{ inputs.region }}" \
+          --query "Command.CommandId" \
+          --output text)
+
+        echo "Waiting for command to complete (ID: $COMMAND_ID)..."
+        aws ssm wait command-executed \
+          --region "${{ inputs.region }}" \
+          --command-id "$COMMAND_ID" \
+          --targets "Key=instanceids,Values=${{ inputs.instance-id }}"
+
+        echo "Fetching command output..."
+        aws ssm get-command-invocation \
+          --command-id "$COMMAND_ID" \
+          --instance-id "${{ inputs.instance-id }}" \
+          --region "${{ inputs.region }}"
