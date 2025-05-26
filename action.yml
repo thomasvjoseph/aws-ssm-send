@@ -21,6 +21,10 @@ runs:
   steps:
     - name: Run remote command via SSM
       shell: bash
+      env:
+        INPUT_REGION: ${{ inputs.region }}
+        INPUT_INSTANCE_ID: ${{ inputs.instance-id }}
+        INPUT_COMMANDS: ${{ inputs.commands }}
       run: |
         echo "Verifying inputs..."
         echo "Region: $INPUT_REGION"
