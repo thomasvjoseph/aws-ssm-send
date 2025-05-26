@@ -88,7 +88,7 @@ jobs:
           aws-region: {{ secrets.AWS_REGION }}
 
       - name: Run EC2 Command via AWS SSM
-        uses: thomasvjoseph/aws-ssm-send@v1.0.0-rc3
+        uses: thomasvjoseph/aws-ssm-send@v1.0.0
         with:
           instance-id: {{ secrets.INSTANCE_ID }}
           region: {{ secrets.AWS_REGION }}
@@ -140,7 +140,9 @@ commands: |
 Prefer using GitHub OIDC for secure, short-lived credentials instead of static AWS keys in secrets.
 
 Learn more here:
+
 👉 https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html
+
 👉 https://github.com/aws-actions/configure-aws-credentials#oidc
 
 ⸻
